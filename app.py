@@ -11,36 +11,35 @@ import json
 app = Flask(__name__)
 app.secret_key = os.environ['FLASKSECRETKEY']
 
-ad_fqdn = os.environ['ADFQDN']
-ad_user = os.environ['ADUSER']
-ad_pass = os.environ['ADPASS']
-erp_apikey = os.environ['ERPAPIKEY']
-erp_url = os.environ['ERPURL']
+AD_FQDN = os.environ['ADFQDN']
+AD_USER = os.environ['ADUSER']
+AD_PASS = os.environ['ADPASS']
+ERP_APIKEY = os.environ['ERPAPIKEY']
+ERP_URL = os.environ['ERPURL']
+ERP_HEADERS = {
+    'api-key': '{}'.format(ERP_APIKEY)
+}
 
 # disable certificate verification
 requests.packages.urllib3.disable_warnings()
-
-ERP_HEADERS = {
-    'api-key': '{}'.format(erp_apikey)
-}
 
 
 def generate_sms_code():
     return randint(100000, 999999)
 
 
-def get_emloyee_id(username: str) -> str:
+def get_employee_id(username: str) -> str:
     '''
 
     :param username: str
     :return: str
     '''
-    l = ldap.initialize('ldap://{}'.format(ad_fqdn.lower()))
-    ad_domain = ad_fqdn.split(".")[0]
-    l.simple_bind_s(ad_domain + "\\" + ad_user, ad_pass)
-    l.set_option(ldap.OPT_REFERRALS, 0)
+    ldap_conn = ldap.initialize('ldap://{}'.format(AD_FQDN.lower()))
+    ad_domain = AD_FQDN.split(".")[0]
+    ldap_conn.simple_bind_s(ad_domain + "\\" + AD_USER, AD_PASS)
+    ldap_conn.set_option(ldap.OPT_REFERRALS, 0)
 
-    ad_fqdn_list = ad_fqdn.lower().split('.')
+    ad_fqdn_list = AD_FQDN.lower().split('.')
     baseDN_list = []
 
     for item in ad_fqdn_list:
@@ -51,7 +50,7 @@ def get_emloyee_id(username: str) -> str:
     retrieveAttributes = ['employeeID']
     searchFilter = "sAMAccountName={}".format(username)
 
-    result = l.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
+    result = ldap_conn.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
 
     employee_id = result[0][-1]['employeeID'][0].decode("utf-8")
 
@@ -59,7 +58,7 @@ def get_emloyee_id(username: str) -> str:
 
 
 def get_phone_number(employee_id):
-    full_erp_url = erp_url + "{}".format(employee_id)
+    full_erp_url = ERP_URL + "{}".format(employee_id)
     response = requests.request("GET", full_erp_url, headers=ERP_HEADERS, verify=False)
     response_dict = json.loads(response.text)
     phone_number = response_dict['privateMobileNumber']
@@ -68,7 +67,7 @@ def get_phone_number(employee_id):
 
 
 def verify_user(username, phone_number):
-    employee_id = get_emloyee_id(username)
+    employee_id = get_employee_id(username)
     erp_phone_number = get_phone_number(employee_id)
     if erp_phone_number == phone_number:
         return True
