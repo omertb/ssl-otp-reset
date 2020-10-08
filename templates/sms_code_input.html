@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SMS Input</title>
+</head>
+<body>
+
+<form action="" method="post">
+
+    {{ form.csrf_token }}
+
+    {{ form.input_sms_code(autocomplete="off", autofocus="true", placeholder="6 Digit Code") }}
+    <button id="resetOtpButton" type="submit">Submit</button>
+
+</form>
+      {% for message in get_flashed_messages() %}
+        {{ message }}
+      {% endfor %}
+</body>
+</html>
