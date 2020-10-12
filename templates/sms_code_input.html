@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>SMS Input</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block custom_head_title %}
+    SMS Code Input Form
+{% endblock %}
 
-<form action="" method="post">
+{% block custom_body_heading %}
+    Verify SMS Code
+{% endblock %}
 
-    {{ form.csrf_token }}
-
-    {{ form.input_sms_code(autocomplete="off", autofocus="true", placeholder="6 Digit Code") }}
-    <button id="resetOtpButton" type="submit">Submit</button>
-
-</form>
-{% for message in get_flashed_messages() %}
-    {{ message }}
-{% endfor %}
-</body>
-</html>
+{% block form_content %}
+    {{ form.input_sms_code(autocomplete="off", class_="form-control mt-2", autofocus="true", placeholder="6 Digit Code") }}
+    <button class="btn btn-lg btn-primary btn-block mt-4" id="resetOtpButton" type="submit">Submit</button>
+{% endblock %}

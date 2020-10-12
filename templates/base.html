@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block custom_head_title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link href="static/form_input.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+
+<div class="text-center d-flex flex-column h-100">
+<form class="form-signin" action="" method="post">
+
+    {{ form.csrf_token }}
+
+    <h1 class="h3 mb-3 font-weight-normal">{% block custom_body_heading %}{% endblock %}</h1>
+
+    {% block form_content %}
+    {% endblock %}
+
+</form>
+
+</div>
+    <div class="row h-100 align-items-center">
+        <div class="col-md-2"></div>
+
+
+        <div class="col-md-8">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            <!-- Categories: success (green), info (blue), warning (yellow), danger (red) -->
+
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} text-center" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% endwith %}
+        </div>
+
+        <div class="col-md-2"></div>
+
+    </div>
+
+    </div>
+</div>
+
+</body>
+</html>
