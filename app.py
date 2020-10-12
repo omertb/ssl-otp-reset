@@ -10,6 +10,11 @@ import json
 
 app = Flask(__name__)
 app.secret_key = os.environ['FLASKSECRETKEY']
+app.config.update(
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
 
 AD_FQDN = os.environ['ADFQDN']
 AD_USER = os.environ['ADUSER']
@@ -144,6 +149,7 @@ def reset_vpn_otp(username):
 def unlock():
     form = UserForm(request.form)
     if request.method == 'POST':
+        # time.sleep(5)
         if form.validate_on_submit():
             username = request.form['input_username']
             phone_number = request.form['input_phone_number']
@@ -225,6 +231,8 @@ def sms_code_input():
                         print("FAIL!")
                 else:
                     flash('SMS is no longer valid; return previous page!', "danger")
+                    print(session['time_when_generated'])
+                    print(session['sms_code_in_session'])
                     session.pop('sms_code_in_session', None)
 
             else:
