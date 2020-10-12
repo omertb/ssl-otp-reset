@@ -14,11 +14,21 @@ app.secret_key = os.environ['FLASKSECRETKEY']
 AD_FQDN = os.environ['ADFQDN']
 AD_USER = os.environ['ADUSER']
 AD_PASS = os.environ['ADPASS']
+
 ERP_APIKEY = os.environ['ERPAPIKEY']
 ERP_URL = os.environ['ERPURL']
 ERP_HEADERS = {
     'api-key': '{}'.format(ERP_APIKEY)
 }
+
+PS7000_URL = os.environ['PS7000URL']
+PS7000_APIKEY = os.environ['PS7000APIKEY']
+PS7000_HEADERS = {
+    'Authorization': "Basic {}".format(PS7000_APIKEY)
+}
+
+SMS_API_URL = os.environ['SMSAPIURL']
+SMS_USER_PASS = os.environ['SMSUSERPASS']
 
 # disable certificate verification
 requests.packages.urllib3.disable_warnings()
@@ -79,11 +89,51 @@ def send_sms(phone_number):
     sms_code = generate_sms_code()
     session['time_when_generated'] = int(time.time())
     session['sms_code_in_session'] = str(sms_code)
-    return True
+    url = SMS_API_URL
+    user_pass_list = SMS_USER_PASS.split(',')
+
+    payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
+              "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
+              "</SingleTextSMS>".format(user_pass_list[0], user_pass_list[1], str(sms_code), phone_number)
+
+    response = requests.request("POST", url, data=payload)
+
+    if "ID" in response.text:
+        return True
+    else:
+        return False
 
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
+def unlock_vpn_otp(username):
+    url = "{}{}?operation=unlock".format(PS7000_URL, username)
+    response = requests.request("PUT", url, headers=PS7000_HEADERS, verify=False)
+    response_dict = json.loads(response.text)
+    if response.status_code == 200:
+        msg = response_dict['result']['info'][0]['message']
+        return msg
+    elif response.status_code == 400:
+        msg = response_dict['result']['errors'][0]['message']
+        return msg
+    else:
+        return "Unknown"
+
+
+def reset_vpn_otp(username):
+    url = "{}{}?operation=reset".format(PS7000_URL, username)
+    response = requests.request("PUT", url, headers=PS7000_HEADERS, verify=False)
+    response_dict = json.loads(response.text)
+    if response.status_code == 200:
+        msg = response_dict['result']['info'][0]['message']
+        return msg
+    elif response.status_code == 400:
+        msg = response_dict['result']['errors'][0]['message']
+        return msg
+    else:
+        return "Unknown"
+
+
+@app.route('/unlock', methods=['GET', 'POST'])
+def unlock():
     form = UserForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -92,9 +142,12 @@ def home():
 
             user_is_verified = verify_user(username, phone_number)
             if user_is_verified:
+                session['username'] = username
                 sms_is_sent = send_sms(phone_number)
                 if sms_is_sent:
                     return redirect(url_for('sms_code_input'))
+                else:
+                    flash("SMS Code Sending Failed, try again later!")
 
     return render_template('user_form.html', form=form)
 
@@ -110,15 +163,22 @@ def sms_code_input():
                     sms_input_from_user = request.form['input_sms_code']
                     if sms_input_from_user == session['sms_code_in_session']:
                         print("SUCCESS!")
+                        unlock_vpn_result = unlock_vpn_otp(session['username'])
+                        flash(unlock_vpn_result)
+                        #
+                        print("User input: {}".format(sms_input_from_user))
+                        print("Generated: {}".format(session['sms_code_in_session']))
+                        session.pop('sms_code_in_session', None)
                     else:
+                        flash('Wrong SMS Code!')
+                        print("User input: {}".format(sms_input_from_user))
+                        print("Generated: {}".format(session['sms_code_in_session']))
                         print("FAIL!")
-                    print("User input: {}".format(sms_input_from_user))
-                    print("Generated: {}".format(session['sms_code_in_session']))
                 else:
                     flash('SMS is no longer valid; return previous page!')
                     session.pop('sms_code_in_session', None)
             else:
-                return redirect(url_for('home'))
+                return redirect(url_for('unlock'))
 
     return render_template('sms_code_input.html', form=form)
 
