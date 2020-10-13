@@ -7,9 +7,9 @@ import ldap
 import requests
 import json
 
-
 app = Flask(__name__)
 app.secret_key = os.environ['FLASKSECRETKEY']
+
 app.config.update(
     SESSION_COOKIE_SECURE=False,
     SESSION_COOKIE_HTTPONLY=True,
@@ -102,19 +102,18 @@ def send_sms(phone_number):
     session['time_when_generated'] = int(time.time())
     session['sms_code_in_session'] = str(sms_code)
     url = SMS_API_URL
-    return True
-#    user_pass_list = SMS_USER_PASS.split(',')
-#
-#    payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
-#              "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
-#              "</SingleTextSMS>".format(user_pass_list[0], user_pass_list[1], str(sms_code), phone_number)
-#
-#    response = requests.request("POST", url, data=payload)
-#
-#    if "ID" in response.text:
-#        return True
-#    else:
-#        return False
+    user_pass_list = SMS_USER_PASS.split(',')
+
+    payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
+              "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
+              "</SingleTextSMS>".format(user_pass_list[0], user_pass_list[1], str(sms_code), phone_number)
+
+    response = requests.request("POST", url, data=payload)
+
+    if "ID" in response.text:
+        return True
+    else:
+        return False
 
 
 def unlock_vpn_otp(username):
@@ -149,7 +148,8 @@ def reset_vpn_otp(username):
 def unlock():
     form = UserForm(request.form)
     if request.method == 'POST':
-        # time.sleep(5)
+        time.sleep(2)
+
         if form.validate_on_submit():
             username = request.form['input_username']
             phone_number = request.form['input_phone_number']
@@ -230,12 +230,16 @@ def sms_code_input():
                         print("Generated: {}".format(session['sms_code_in_session']))
                         print("FAIL!")
                 else:
-                    flash('SMS is no longer valid; return previous page!', "danger")
-                    print(session['time_when_generated'])
-                    print(session['sms_code_in_session'])
+                    flash('Failure! SMS is no longer valid; returned previous page!', "danger")
                     session.pop('sms_code_in_session', None)
+                    time.sleep(5)
+                    if session['reset']:
+                        return redirect(url_for('reset'))
+                    else:
+                        return redirect(url_for('unlock'))
 
             else:
+                flash("Returned {} page!".format("reset" if session['reset'] else "unlock"), "warning")
                 if session['reset']:
                     return redirect(url_for('reset'))
                 else:
