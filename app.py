@@ -12,29 +12,38 @@ import json
 app = Flask(__name__)
 app.secret_key = os.environ['FLASKSECRETKEY']
 
+# session header options:
 app.config.update(
     SESSION_COOKIE_SECURE=False,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
 )
 
+# Google ReCaptcha Keys:
+app.config['RECAPTCHA_PUBLIC_KEY'] = os.environ['CAPTCHAPUBKEY']
+app.config['RECAPTCHA_PRIVATE_KEY'] = os.environ['CAPTCHAPRIKEY']
+app.config['RECAPTCHA_USE_SSL']= False
+
+# Active Directory Access (to get employee id):
 AD_FQDN = os.environ['ADFQDN']
 AD_USER = os.environ['ADUSER']
 AD_PASS = os.environ['ADPASS']
 
+# Corporate ERP System Access, (for user-phone validation)
 ERP_APIKEY = os.environ['ERPAPIKEY']
 ERP_URL = os.environ['ERPURL']
 ERP_HEADERS = {
     'api-key': '{}'.format(ERP_APIKEY)
 }
 
+# ssl-vpn server api access
 PS7000_URL = os.environ['PS7000URL']
 PS7000_APIKEY = os.environ['PS7000APIKEY']
-
 PS7000_HEADERS = {
     'Authorization': "Basic {}".format(PS7000_APIKEY)
 }
 
+# cell network api access to send sms:
 SMS_API_URL = os.environ['SMSAPIURL']
 SMS_USER_PASS = os.environ['SMSUSERPASS']
 
@@ -91,6 +100,7 @@ def get_employee_id(username: str) -> str:
 def get_phone_number(employee_id):
     full_erp_url = ERP_URL + "{}".format(employee_id)
     response = requests.request("GET", full_erp_url, headers=ERP_HEADERS, verify=False)
+    print(response.text)
     response_dict = json.loads(response.text)
     phone_number = response_dict['privateMobileNumber']
     phone_number = "".join(phone_number.split(" ")[-2:]).replace("(", "").replace(")", "")
@@ -98,6 +108,7 @@ def get_phone_number(employee_id):
 
 
 def verify_user(username, phone_number):
+    # return True  # troubleshooting purpose
     employee_id = get_employee_id(username)
     if employee_id:
         erp_phone_number = get_phone_number(employee_id)
@@ -132,25 +143,25 @@ def send_sms(phone_number):
     sms_code = generate_sms_code()
     session['time_when_generated'] = int(time.time())
     session['sms_code_in_session'] = str(sms_code)
-    return True
-#    url = SMS_API_URL
-#    user_pass_list = SMS_USER_PASS.split(',')
-#
-#    payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
-#              "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
-#              "</SingleTextSMS>".format(user_pass_list[0], user_pass_list[1], str(sms_code), phone_number)
-#
-#    response = requests.request("POST", url, data=payload)
-#
-#    if "ID" in response.text:
-#        message = "Sent SMS to phone number: {} with ID Number: {}".format(phone_number, response.text)
-#        send_wr_log(message)
-#        return True
-#    else:
-#        message = "Failed to send SMS to phone number: {}; Error Code: {}, {}".format(phone_number, response.text,
-#                                                                                      sms_error_dict[response.text])
-#        send_wr_log(message)
-#        return False
+    # return True  # troubleshooting purpose
+    url = SMS_API_URL
+    user_pass_list = SMS_USER_PASS.split(',')
+
+    payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
+              "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
+              "</SingleTextSMS>".format(user_pass_list[0], user_pass_list[1], str(sms_code), phone_number)
+
+    response = requests.request("POST", url, data=payload)
+
+    if "ID" in response.text:
+        message = "Sent SMS to phone number: {} with ID Number: {}".format(phone_number, response.text)
+        send_wr_log(message)
+        return True
+    else:
+        message = "Failed to send SMS to phone number: {}; Error Code: {}, {}".format(phone_number, response.text,
+                                                                                      sms_error_dict[response.text])
+        send_wr_log(message)
+        return False
 
 
 def unlock_vpn_otp(username):
@@ -198,6 +209,9 @@ def unlock():
             except ldap.LDAPError as e:
                 flash("LDAP Error: {}".format(e), "danger")
                 return render_template('unlock_form.html', form=form)
+            except json.decoder.JSONDecodeError as e:
+                flash("JSON Error: {}".format(e), "danger")
+                return render_template('unlock_form.html', form=form)
             # logging:
             message = "User: {} with phone number: {};" \
                       " Verification : {}".format(username, phone_number,
@@ -241,6 +255,9 @@ def reset():
                 user_is_verified = verify_user(username, phone_number)
             except ldap.LDAPError as e:
                 flash("LDAP Error: {}".format(e), "danger")
+                return render_template('reset_form.html', form=form)
+            except json.decoder.JSONDecodeError as e:
+                flash("JSON Error: {}".format(e), "danger")
                 return render_template('reset_form.html', form=form)
 
             # logging:

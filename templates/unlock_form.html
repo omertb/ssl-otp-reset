@@ -11,5 +11,12 @@
 {% block form_content %}
     {{ form.input_username(autocomplete="off", class_="form-control mt-2", autofocus="true", placeholder="firstname.surname") }}
     {{ form.input_phone_number(autocomplete="off", class_="form-control mt-2", placeholder="5XX (10 Digit)") }}
+    {{ form.recaptcha }}
+    <ul>
+    {% for error in form.recaptcha.errors %}
+        <li style="color:red;">{{ error }}</li>
+    {% endfor %}
+    </ul>
+
     <button id="sendSmsButton" class="btn btn-lg btn-primary btn-block mt-4" type="submit">Send SMS</button>
 {% endblock %}
