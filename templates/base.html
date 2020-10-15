@@ -12,7 +12,19 @@
 <body>
 <div class="container">
 
-<div class="text-center d-flex flex-column h-100">
+<div class="row">
+    <div class="col-md-4"></div>
+
+    <div class="col-md-4">
+        <form class="form-inline my-2 my-lg-0 float-right" method="get" action="http://10.29.6.10:32783/otp-reset-unlock/">
+          <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Back to Main</button>
+        </form>
+    </div>
+
+    <div class="col-md-4"></div>
+</div>
+
+<div class="row text-center d-flex flex-column h-100">
 <form class="form-signin" action="" method="post">
 
     {{ form.csrf_token }}
@@ -25,6 +37,7 @@
 </form>
 
 </div>
+
     <div class="row h-100 align-items-center">
         <div class="col-md-2"></div>
 
