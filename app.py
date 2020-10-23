@@ -5,7 +5,7 @@ from logger import send_wr_log
 import time
 from time import gmtime, strftime
 import os
-import ldap
+import ldap, ldap.dn, ldap.filter
 import requests
 import json
 
@@ -81,12 +81,12 @@ def get_employee_id(username: str) -> str:
     baseDN_list = []
 
     for item in ad_fqdn_list:
-        baseDN_list.append("dc={}".format(item))
+        baseDN_list.append("dc={}".format(ldap.dn.escape_dn_chars(item)))
 
     baseDN = ",".join(baseDN_list)
     searchScope = ldap.SCOPE_SUBTREE
     retrieveAttributes = ['employeeID']
-    searchFilter = "sAMAccountName={}".format(username)
+    searchFilter = "sAMAccountName={}".format(ldap.filter.escape_filter_chars(username))
 
     result = ldap_conn.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
 
@@ -198,6 +198,10 @@ def unlock():
     if request.method == 'POST':
 
         time.sleep(2)
+        session['input_count'] = 0
+        # sms_code_in_session control
+        # if 'sms_code_in_session' in session:
+        #     session.pop('sms_code_in_session', None)
         if form.validate_on_submit():
             username = request.form['input_username']
             username = username.split('@')[0]
@@ -211,6 +215,9 @@ def unlock():
                 return render_template('unlock_form.html', form=form)
             except json.decoder.JSONDecodeError as e:
                 flash("JSON Error: {}".format(e), "danger")
+                return render_template('unlock_form.html', form=form)
+            except requests.exceptions.ConnectionError as e:
+                flash("URL Connection Error", "danger")
                 return render_template('unlock_form.html', form=form)
             # logging:
             message = "User: {} with phone number: {};" \
@@ -245,6 +252,10 @@ def unlock():
 def reset():
     form = UserForm(request.form)
     if request.method == 'POST':
+        session['input_count'] = 0
+        # sms_code_in_session control
+        # if 'sms_code_in_session' in session:
+        #     session.pop('sms_code_in_session', None)
         if form.validate_on_submit():
             username = request.form['input_username']
             username = username.split('@')[0]
@@ -258,6 +269,9 @@ def reset():
                 return render_template('reset_form.html', form=form)
             except json.decoder.JSONDecodeError as e:
                 flash("JSON Error: {}".format(e), "danger")
+                return render_template('reset_form.html', form=form)
+            except requests.exceptions.ConnectionError as e:
+                flash("URL Connection Error", "danger")
                 return render_template('reset_form.html', form=form)
 
             # logging:
@@ -294,6 +308,14 @@ def sms_code_input():
         if form.validate_on_submit():
             if 'sms_code_in_session' in session:
                 current_time = int(time.time())
+                session['input_count'] += 1
+                if session['input_count'] == 4:
+                    flash('SMS code is invalid, try again!', "warning")
+                    session.pop('sms_code_in_session', None)
+                    if session['reset']:
+                        return redirect(url_for('reset'))
+                    else:
+                        return redirect(url_for('unlock'))
                 if current_time - session['time_when_generated'] < 120:
                     sms_input_from_user = request.form['input_sms_code']
                     if sms_input_from_user == session['sms_code_in_session']:
