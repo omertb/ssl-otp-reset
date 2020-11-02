@@ -45,7 +45,7 @@ PS7000_HEADERS = {
 
 # cell network api access to send sms:
 SMS_API_URL = os.environ['SMSAPIURL']
-SMS_USER_PASS = os.environ['SMSUSERPASS']
+SMS_USER_PASS = ""  # decision made in get_phone_number function
 
 # disable certificate verification
 requests.packages.urllib3.disable_warnings()
@@ -103,7 +103,18 @@ def get_phone_number(employee_id):
     print(response.text)
     response_dict = json.loads(response.text)
     phone_number = response_dict['privateMobileNumber']
-    phone_number = "".join(phone_number.split(" ")[-2:]).replace("(", "").replace(")", "")
+
+    phone_number = phone_number.replace("(", "").replace(")", "")
+    phone_number_parts = phone_number.split(" ")
+
+    global SMS_USER_PASS
+    if phone_number_parts[0] == "0090":
+        SMS_USER_PASS = os.environ['SMSUSERPASS'].split(',')
+        phone_number = "".join(phone_number_parts[-2:])
+    else:
+        SMS_USER_PASS = os.environ['SMSUSERPASSINT'].split(',')
+        phone_number = "".join(phone_number_parts)
+
     return phone_number
 
 
@@ -141,11 +152,8 @@ def check_sms_count(phone_number):
 
 def send_sms(phone_number):
     sms_code = generate_sms_code()
-    session['time_when_generated'] = int(time.time())
-    session['sms_code_in_session'] = str(sms_code)
-    # return True  # troubleshooting purpose
+    user_pass_list = SMS_USER_PASS
     url = SMS_API_URL
-    user_pass_list = SMS_USER_PASS.split(',')
 
     payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
               "<Mesgbody>OTP Reset/Unlock Code: {}</Mesgbody> <Numbers>{}</Numbers> " \
