@@ -152,7 +152,9 @@ def check_sms_count(phone_number):
 
 def send_sms(phone_number):
     sms_code = generate_sms_code()
-    user_pass_list = SMS_USER_PASS
+    session['time_when_generated'] = int(time.time())
+    session['sms_code_in_session'] = str(sms_code)
+    user_pass_list = SMS_USER_PASS  # set under get_phone_number as global variable
     url = SMS_API_URL
 
     payload = "<SingleTextSMS> <UserName>{}</UserName> <PassWord>{}</PassWord> <Action>0</Action> " \
@@ -176,6 +178,7 @@ def unlock_vpn_otp(username):
     url = "{}{}?operation=unlock".format(PS7000_URL, username)
     response = requests.request("PUT", url, headers=PS7000_HEADERS, verify=False)
     response_dict = json.loads(response.text)
+    print(response.text)
     if response.status_code == 200:
         msg = response_dict['result']['info'][0]['message']
         return msg
