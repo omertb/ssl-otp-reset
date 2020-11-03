@@ -108,11 +108,13 @@ def get_phone_number(employee_id):
     phone_number_parts = phone_number.split(" ")
 
     global SMS_USER_PASS
-    if phone_number_parts[0] == "0090":
+    if phone_number_parts[0] == "0090" or phone_number_parts[0] == "90":
         SMS_USER_PASS = os.environ['SMSUSERPASS'].split(',')
         phone_number = "".join(phone_number_parts[-2:])
     else:
         SMS_USER_PASS = os.environ['SMSUSERPASSINT'].split(',')
+        if not phone_number_parts[0].startswith("00"):
+            phone_number_parts[0] = "00" + phone_number_parts[0]
         phone_number = "".join(phone_number_parts)
 
     return phone_number
@@ -125,6 +127,7 @@ def verify_user(username, phone_number):
         erp_phone_number = get_phone_number(employee_id)
     else:
         return False
+    print(employee_id, erp_phone_number, phone_number)
 
     if erp_phone_number == phone_number:
         return True
