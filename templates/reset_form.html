@@ -10,6 +10,13 @@
 
 {% block form_content %}
     {{ form.input_username(autocomplete="off", class_="form-control mt-2", autofocus="true", placeholder="firstname.surname") }}
+    <span class="error" style="color: darkred; font-size: 12px;">
+      {% if form.input_username.errors %}
+        {% for error in form.input_username.errors %}
+          {{ error }}
+        {% endfor %}
+      {% endif %}
+    </span>
     {{ form.input_phone_number(autocomplete="off", class_="form-control mt-2", placeholder="5XX (10 Digit)") }}
     <p>
     <div style="font-size: 12px; color: dimgrey;"> Int. users should begin with country code as 00XX</div>

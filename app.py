@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for, flash, Markup
 from forms import UserForm, SmsForm
 from random import randint
 from logger import send_wr_log
@@ -300,7 +300,7 @@ def reset():
                     message = "You cannot send more than 5 SMS per day. Please contact to 1818"
                     send_wr_log("User: {} - {}".format(username, message))
                     flash(message, "danger")
-                    return render_template('unlock_form.html', form=form)
+                    return render_template('reset_form.html', form=form)
 
                 session['username'] = username
                 sms_is_sent = send_sms(phone_number)
@@ -350,6 +350,9 @@ def sms_code_input():
                             flash_cat = "warning"
                         else:
                             flash_cat = "success"
+                            if session['reset']:
+                                link_msg = Markup('<p>Get a new QR code on <a href="https://vpn.lcwaikiki.com">vpn.lcwaikiki.com</a></p>')
+                                vpn_api_call_result += "; " + link_msg
                         message = "User: {} - Pulse Secure Response: {}".format(session['username'], vpn_api_call_result)
                         send_wr_log(message)
                         flash(vpn_api_call_result, flash_cat)
