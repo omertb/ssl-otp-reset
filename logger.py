@@ -5,7 +5,7 @@ import os
 # import socket
 
 
-LOG_SERVER = None
+LOG_SERVER = "10.29.6.10"
 DATE_FORMAT = "[%a, %d/%b/%Y %H:%M:%S +0000]"
 NAME_FORMAT = "%Y%m%d.log"
 LOG_DIR = "/project/logs/"
@@ -24,7 +24,7 @@ def send_wr_log(log_message):
     if LOG_SERVER:
         syslogger = logging.getLogger('SyslogLogger')
         syslogger.setLevel(logging.INFO)
-        log_handler = SysLogHandler(address=(LOG_SERVER, 514))
+        log_handler = SysLogHandler(address=(LOG_SERVER, 5044))
         log_handler.addFilter(ContextFilter())
         msg_format = '%(asctime)s %(hostname)s  %(message)s'
         formatter = logging.Formatter(msg_format, datefmt='%b %d %H:%M:%S')

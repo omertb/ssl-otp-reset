@@ -100,7 +100,6 @@ def get_employee_id(username: str) -> str:
 def get_phone_number(employee_id):
     full_erp_url = ERP_URL + "{}".format(employee_id)
     response = requests.request("GET", full_erp_url, headers=ERP_HEADERS, verify=False)
-    print(response.text)
     response_dict = json.loads(response.text)
     phone_number = response_dict['privateMobileNumber']
 
@@ -127,7 +126,6 @@ def verify_user(username, phone_number):
         erp_phone_number = get_phone_number(employee_id)
     else:
         return False
-    print(employee_id, erp_phone_number, phone_number)
 
     if erp_phone_number == phone_number:
         return True
@@ -181,7 +179,6 @@ def unlock_vpn_otp(username):
     url = "{}{}?operation=unlock".format(PS7000_URL, username)
     response = requests.request("PUT", url, headers=PS7000_HEADERS, verify=False)
     response_dict = json.loads(response.text)
-    print(response.text)
     if response.status_code == 200:
         msg = response_dict['result']['info'][0]['message']
         return msg
@@ -234,9 +231,9 @@ def unlock():
                 flash("URL Connection Error", "danger")
                 return render_template('unlock_form.html', form=form)
             # logging:
-            message = "User: {} with phone number: {};" \
-                      " Verification : {}".format(username, phone_number,
-                                                  "SUCCESS" if user_is_verified else "FAIL")
+            message = "User: {} - Phone Number: {} " \
+                      "LDAP-ERP Verification: {}".format(username, phone_number,
+                                                         "SUCCESS" if user_is_verified else "FAIL")
             send_wr_log(message)
 
             if user_is_verified:
@@ -289,9 +286,9 @@ def reset():
                 return render_template('reset_form.html', form=form)
 
             # logging:
-            message = "User: {} with phone number: {};" \
-                      " Verification : {}".format(username, phone_number,
-                                                  "SUCCESS" if user_is_verified else "FAIL")
+            message = "User: {} - Phone Number: {} " \
+                      "LDAP-ERP Verification: {}".format(username, phone_number,
+                                                         "SUCCESS" if user_is_verified else "FAIL")
             send_wr_log(message)
 
             if user_is_verified:
@@ -356,17 +353,11 @@ def sms_code_input():
                         message = "User: {} - Pulse Secure Response: {}".format(session['username'], vpn_api_call_result)
                         send_wr_log(message)
                         flash(vpn_api_call_result, flash_cat)
-                        #
-                        print("User input: {}".format(sms_input_from_user))
-                        print("Generated: {}".format(session['sms_code_in_session']))
                         session.pop('sms_code_in_session', None)
                     else:
                         flash('Wrong SMS Code!', "danger")
                         message = "User: {} - SMS Verification: FAILED".format(session['username'])
                         send_wr_log(message)
-                        print("User input: {}".format(sms_input_from_user))
-                        print("Generated: {}".format(session['sms_code_in_session']))
-                        print("FAIL!")
                 else:
                     flash('Failure! SMS is no longer valid; returned previous page!', "danger")
                     message = "User: {} - SMS Code Timeout".format(session['username'])
