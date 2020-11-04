@@ -356,7 +356,7 @@ def sms_code_input():
                         session.pop('sms_code_in_session', None)
                     else:
                         flash('Wrong SMS Code!', "danger")
-                        message = "User: {} - SMS Verification: FAILED".format(session['username'])
+                        message = "User: {} - SMS Code Verification: FAILED".format(session['username'])
                         send_wr_log(message)
                 else:
                     flash('Failure! SMS is no longer valid; returned previous page!', "danger")
