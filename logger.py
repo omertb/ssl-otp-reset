@@ -13,7 +13,7 @@ LOG_DIR = "/project/logs/"
 
 class ContextFilter(logging.Filter):
     # hostname = socket.gethostname()
-    hostname = "meranet-flask-server"
+    hostname = "vpn-otp-server"
 
     def filter(self, record):
         record.hostname = ContextFilter.hostname

@@ -338,6 +338,7 @@ def sms_code_input():
                         else:
                             vpn_api_call_result = unlock_vpn_otp(session['username'])
 
+                        flash_message = vpn_api_call_result
                         # User Feedback Message:
                         if "Error" in vpn_api_call_result:
                             flash_cat = "danger"
@@ -349,10 +350,10 @@ def sms_code_input():
                             flash_cat = "success"
                             if session['reset']:
                                 link_msg = Markup('<p>Get a new QR code on <a href="https://vpn.lcwaikiki.com">vpn.lcwaikiki.com</a></p>')
-                                vpn_api_call_result += "; " + link_msg
+                                flash_message += "; " + link_msg
                         message = "User: {} - Pulse Secure Response: {}".format(session['username'], vpn_api_call_result)
                         send_wr_log(message)
-                        flash(vpn_api_call_result, flash_cat)
+                        flash(flash_message, flash_cat)
                         session.pop('sms_code_in_session', None)
                     else:
                         flash('Wrong SMS Code!', "danger")
