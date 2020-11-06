@@ -22,12 +22,14 @@
     <p>
     <div style="font-size: 12px; color: dimgrey;"> Int. users should begin with country code as 00XX</div>
     </p>
+
     {{ form.recaptcha }}
     <ul>
     {% for error in form.recaptcha.errors %}
         <li style="color:red;">{{ error }}</li>
     {% endfor %}
     </ul>
+
 
     <button id="sendSmsButton" class="btn btn-lg btn-primary btn-block mt-4" type="submit">Send SMS</button>
 {% endblock %}

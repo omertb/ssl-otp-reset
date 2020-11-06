@@ -20,16 +20,18 @@ class ContextFilter(logging.Filter):
         return True
 
 
+syslogger = logging.getLogger('SyslogLogger')
+syslogger.setLevel(logging.INFO)
+log_handler = SysLogHandler(address=(LOG_SERVER, 5044))
+log_handler.addFilter(ContextFilter())
+msg_format = '%(asctime)s %(hostname)s  %(message)s'
+formatter = logging.Formatter(msg_format, datefmt='%b %d %H:%M:%S')
+log_handler.setFormatter(formatter)
+syslogger.addHandler(log_handler)
+
+
 def send_wr_log(log_message):
     if LOG_SERVER:
-        syslogger = logging.getLogger('SyslogLogger')
-        syslogger.setLevel(logging.INFO)
-        log_handler = SysLogHandler(address=(LOG_SERVER, 5044))
-        log_handler.addFilter(ContextFilter())
-        msg_format = '%(asctime)s %(hostname)s  %(message)s'
-        formatter = logging.Formatter(msg_format, datefmt='%b %d %H:%M:%S')
-        log_handler.setFormatter(formatter)
-        syslogger.addHandler(log_handler)
         syslogger.info(log_message)
 
     # write to a log file
