@@ -107,6 +107,7 @@ def get_phone_number(employee_id):
     phone_number_parts = phone_number.split(" ")
 
     global SMS_USER_PASS
+
     if phone_number_parts[0] == "0090" or phone_number_parts[0] == "90":
         SMS_USER_PASS = os.environ['SMSUSERPASS'].split(',')
         phone_number = "".join(phone_number_parts[-2:])
@@ -120,10 +121,12 @@ def get_phone_number(employee_id):
 
 
 def verify_user(username, phone_number):
+    session['erp_phone_number'] = None
     # return True  # troubleshooting purpose
     employee_id = get_employee_id(username)
     if employee_id:
         erp_phone_number = get_phone_number(employee_id)
+        session['erp_phone_number'] = erp_phone_number
     else:
         return False
 
@@ -230,9 +233,11 @@ def unlock():
             except requests.exceptions.ConnectionError as e:
                 flash("URL Connection Error", "danger")
                 return render_template('unlock_form.html', form=form)
+
             # logging:
-            message = "User: {} - Phone Number: {} " \
+            message = "User: {} - Phone Number: {}, ERP Phone: {}, " \
                       "LDAP-ERP Verification: {}".format(username, phone_number,
+                                                         session['erp_phone_number'],
                                                          "SUCCESS" if user_is_verified else "FAIL")
             send_wr_log(message)
 
@@ -286,8 +291,9 @@ def reset():
                 return render_template('reset_form.html', form=form)
 
             # logging:
-            message = "User: {} - Phone Number: {} " \
+            message = "User: {} - Phone Number: {}, ERP Phone: {}, " \
                       "LDAP-ERP Verification: {}".format(username, phone_number,
+                                                         session['erp_phone_number'],
                                                          "SUCCESS" if user_is_verified else "FAIL")
             send_wr_log(message)
 
