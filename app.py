@@ -91,7 +91,11 @@ def get_employee_id(username: str) -> str:
     result = ldap_conn.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
 
     if result[0][0]:
-        employee_id = result[0][-1]['employeeID'][0].decode("utf-8")
+        try:
+            employee_id = result[0][-1]['employeeID'][0].decode("utf-8")
+        except KeyError:
+            flash("employeeID is missing in Active Directory!\n Contact IT System and Datacenter Management.", "danger")
+            return False
         return employee_id
     else:
         return False
