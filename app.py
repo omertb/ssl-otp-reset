@@ -8,6 +8,7 @@ import os
 import ldap, ldap.dn, ldap.filter
 import requests
 import json
+import pdb
 
 app = Flask(__name__)
 app.secret_key = os.environ['FLASKSECRETKEY']
@@ -94,11 +95,38 @@ def get_employee_id(username: str) -> str:
         try:
             employee_id = result[0][-1]['employeeID'][0].decode("utf-8")
         except KeyError:
-            flash("employeeID is missing in Active Directory!\n Contact IT System and Datacenter Management.", "danger")
+            # flash("employeeID is missing in Active Directory!\n Contact IT System and Datacenter Management.", "danger")
             return False
         return employee_id
     else:
         return False
+
+
+def get_ldap_user(username: str) -> str:
+    '''
+
+    :param username: str
+    :return: str
+    '''
+    ldap_conn = ldap.initialize('ldap://{}'.format(AD_FQDN.lower()))
+    ad_domain = AD_FQDN.split(".")[0]
+    ldap_conn.simple_bind_s(ad_domain + "\\" + AD_USER, AD_PASS)
+    ldap_conn.set_option(ldap.OPT_REFERRALS, 0)
+
+    ad_fqdn_list = AD_FQDN.lower().split('.')
+    baseDN_list = []
+
+    for item in ad_fqdn_list:
+        baseDN_list.append("dc={}".format(ldap.dn.escape_dn_chars(item)))
+
+    baseDN = ",".join(baseDN_list)
+    searchScope = ldap.SCOPE_SUBTREE
+    retrieveAttributes = ['']
+    searchFilter = "sAMAccountName={}".format(ldap.filter.escape_filter_chars(username))
+
+    result = ldap_conn.search_s(baseDN, searchScope, searchFilter, retrieveAttributes)
+
+    return result[0][0]
 
 
 def get_phone_number(employee_id):
@@ -246,20 +274,36 @@ def unlock():
             send_wr_log(message)
 
             if user_is_verified:
-                below_limit = check_sms_count(phone_number)
-                if not below_limit:
-                    message = "You cannot send more than 5 SMS per day. Please contact to 1818"
-                    send_wr_log("User: {} - {}".format(username, message))
-                    flash(message, "danger")
-                    return render_template('unlock_form.html', form=form)
+                on_behalf_option = request.form['on_behalf_option']
+                if on_behalf_option == "Myself":
+                    below_limit = check_sms_count(phone_number)
+                    if not below_limit:
+                        message = "You cannot send more than 5 SMS per day. Please contact to 1818"
+                        send_wr_log("User: {} - {}".format(username, message))
+                        flash(message, "danger")
+                        return render_template('unlock_form.html', form=form)
 
-                session['username'] = username
-                sms_is_sent = send_sms(phone_number)
-                if sms_is_sent:
-                    session['reset'] = False  # account is to be unlocked
-                    return redirect(url_for('sms_code_input'))
+                    session['username'] = username
+                    sms_is_sent = send_sms(phone_number)
+                    if sms_is_sent:
+                        session['reset'] = False  # account is to be unlocked
+                        return redirect(url_for('sms_code_input'))
+                    else:
+                        flash("SMS Code Sending Failed, try again later!")
                 else:
-                    flash("SMS Code Sending Failed, try again later!")
+                    username_ldap_dn = get_ldap_user(username)
+
+                    third_party_user = request.form['third_party_user']
+                    third_party_user = third_party_user.split('@')[0]
+                    third_party_user = third_party_user.split("\\")[-1]
+                    third_party_user_ldap_dn = get_ldap_user(third_party_user)
+                    if ("OU=BT MAGAZA DESTEK MUDURLUGU" in username_ldap_dn \
+                            or "OU=BT MERKEZ DESTEK-DEPO-LISANS MUDURLUGU" in username_ldap_dn)\
+                            and "OU=THIRD PARTY" in third_party_user_ldap_dn:
+                        print("Authorized")
+                    else:
+                        print("NOT Authorized!")
+
             else:
                 flash("Username or Phone Number is Incorrect! Try Again!", "danger")
     # else:

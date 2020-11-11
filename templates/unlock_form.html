@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block form_content %}
-    {{ form.input_username(autocomplete="off", class_="form-control mt-2", autofocus="true", placeholder="firstname.surname") }}
+        {{ form.input_username(autocomplete="off", class_="form-control mt-2", autofocus="true", placeholder="firstname.surname") }}
     <span class="error" style="color: darkred; font-size: 12px;">
       {% if form.input_username.errors %}
         {% for error in form.input_username.errors %}
@@ -21,6 +21,25 @@
     {{ form.input_phone_number(autocomplete="off", class_="form-control mt-2", placeholder="5XX (10 Digit)") }}
     <p>
     <div style="font-size: 12px; color: dimgrey;"> Int. users should begin with country code as 00XX</div>
+    </p>
+
+    <p>
+    <div class="form-group">
+    <h5>Unlock For:</h5>
+        {{ form.on_behalf_option(class_="form-control form-control-sm", id="onBehalf") }}
+    </div>
+        <div id="thirdPartyUserArea">
+            <div class="form-group">
+                  {{ form.third_party_user(class_="form-control", id="thirdPartyUser", placeholder="firstname.surname (3rd Party)") }}
+            </div>
+            <span class="error" style="color: darkred; font-size: 12px;">
+                  {% if form.third_party_user.errors %}
+                    {% for error in form.third_party_user.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  {% endif %}
+            </span>
+        </div>
     </p>
 
     {{ form.recaptcha }}

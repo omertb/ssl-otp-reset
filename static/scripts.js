@@ -1,3 +1,16 @@
+$(document).ready(function(){
+    $("#onBehalf").change(function(){
+        $(this).find("option:selected").each(function(){
+            var optionValue = $(this).attr("value");
+            if(optionValue=='Myself'){
+                $("#thirdPartyUserArea").hide();
+            } else{
+                $("#thirdPartyUserArea").fadeIn();
+            }
+        });
+    }).change();
+});
+
 $(document).ready(function() {
   $('.btn').on('click', function() {
     var $this = $(this);
@@ -10,4 +23,4 @@ $(document).ready(function() {
       $this.html($this.data('original-text'));
     }, 4000);
   });
-})
+});
