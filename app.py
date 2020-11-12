@@ -275,6 +275,7 @@ def unlock():
 
             if user_is_verified:
                 on_behalf_option = request.form['on_behalf_option']
+                # unlock for myself
                 if on_behalf_option == "Myself":
                     below_limit = check_sms_count(phone_number)
                     if not below_limit:
@@ -284,25 +285,46 @@ def unlock():
                         return render_template('unlock_form.html', form=form)
 
                     session['username'] = username
-                    sms_is_sent = send_sms(phone_number)
-                    if sms_is_sent:
-                        session['reset'] = False  # account is to be unlocked
-                        return redirect(url_for('sms_code_input'))
-                    else:
-                        flash("SMS Code Sending Failed, try again later!")
-                else:
-                    username_ldap_dn = get_ldap_user(username)
 
+                # unlock for someone else, 3rd party user
+                else:
                     third_party_user = request.form['third_party_user']
                     third_party_user = third_party_user.split('@')[0]
                     third_party_user = third_party_user.split("\\")[-1]
-                    third_party_user_ldap_dn = get_ldap_user(third_party_user)
+                    try:
+                        third_party_user_ldap_dn = get_ldap_user(third_party_user)
+                        username_ldap_dn = get_ldap_user(username)
+                    except ldap.LDAPError as e:
+                        flash("LDAP Error: {}".format(e), "danger")
+                        return render_template('unlock_form.html', form=form)
+
+                    if not third_party_user_ldap_dn:
+                        # if user is not found, misinform form submitter
+                        flash("Not authorized!", "warning")
+                        log_msg = "User: {} - Unlock attempt on non-existing user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
+                        return render_template('unlock_form.html', form=form)
+
+                    # only these groups can unlock only 3rd party users
                     if ("OU=BT MAGAZA DESTEK MUDURLUGU" in username_ldap_dn \
                             or "OU=BT MERKEZ DESTEK-DEPO-LISANS MUDURLUGU" in username_ldap_dn)\
                             and "OU=THIRD PARTY" in third_party_user_ldap_dn:
-                        print("Authorized")
+                        session['username'] = third_party_user
+                        log_msg = "User: {} - Unlock attempt on user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
                     else:
-                        print("NOT Authorized!")
+                        flash("Not authorized!", "warning")
+                        log_msg = "User: {} - Not authorized to unlock user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
+                        return render_template('unlock_form.html', form=form)
+
+                # send sms to the person performing unlock
+                sms_is_sent = send_sms(phone_number)
+                if sms_is_sent:
+                    session['reset'] = False  # account is to be unlocked
+                    return redirect(url_for('sms_code_input'))
+                else:
+                    flash("SMS Code Sending Failed, try again later!")
 
             else:
                 flash("Username or Phone Number is Incorrect! Try Again!", "danger")
@@ -346,14 +368,51 @@ def reset():
             send_wr_log(message)
 
             if user_is_verified:
-                below_limit = check_sms_count(phone_number)
-                if not below_limit:
-                    message = "You cannot send more than 5 SMS per day. Please contact to 1818"
-                    send_wr_log("User: {} - {}".format(username, message))
-                    flash(message, "danger")
-                    return render_template('reset_form.html', form=form)
+                on_behalf_option = request.form['on_behalf_option']
+                # reset for myself
+                if on_behalf_option == "Myself":
+                    below_limit = check_sms_count(phone_number)
+                    if not below_limit:
+                        message = "You cannot send more than 5 SMS per day. Please contact to 1818"
+                        send_wr_log("User: {} - {}".format(username, message))
+                        flash(message, "danger")
+                        return render_template('reset_form.html', form=form)
 
-                session['username'] = username
+                    session['username'] = username
+
+                # reset for someone else, 3rd party user
+                else:
+                    third_party_user = request.form['third_party_user']
+                    third_party_user = third_party_user.split('@')[0]
+                    third_party_user = third_party_user.split("\\")[-1]
+                    try:
+                        third_party_user_ldap_dn = get_ldap_user(third_party_user)
+                        username_ldap_dn = get_ldap_user(username)
+                    except ldap.LDAPError as e:
+                        flash("LDAP Error: {}".format(e), "danger")
+                        return render_template('reset_form.html', form=form)
+
+                    if not third_party_user_ldap_dn:
+                        # if user is not found, misinform form submitter
+                        flash("Not authorized!", "warning")
+                        log_msg = "User: {} - Reset attempt on non-existing user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
+                        return render_template('reset_form.html', form=form)
+
+                    # only these groups can unlock only 3rd party users
+                    if ("OU=BT MAGAZA DESTEK MUDURLUGU" in username_ldap_dn \
+                            or "OU=BT MERKEZ DESTEK-DEPO-LISANS MUDURLUGU" in username_ldap_dn)\
+                            and "OU=THIRD PARTY" in third_party_user_ldap_dn:
+                        session['username'] = third_party_user
+                        log_msg = "User: {} - Reset attempt on user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
+                    else:
+                        flash("Not authorized!", "warning")
+                        log_msg = "User: {} - Not authorized to reset user {}".format(username, third_party_user)
+                        send_wr_log(log_msg)
+                        return render_template('reset_form.html', form=form)
+
+                # send sms to the person performing reset
                 sms_is_sent = send_sms(phone_number)
                 if sms_is_sent:
                     session['reset'] = True

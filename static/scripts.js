@@ -4,6 +4,7 @@ $(document).ready(function(){
             var optionValue = $(this).attr("value");
             if(optionValue=='Myself'){
                 $("#thirdPartyUserArea").hide();
+                document.getElementById('thirdPartyUser').value = '';
             } else{
                 $("#thirdPartyUserArea").fadeIn();
             }
