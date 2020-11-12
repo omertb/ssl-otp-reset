@@ -6,7 +6,7 @@ $(document).ready(function(){
                 $("#thirdPartyUserArea").hide();
                 document.getElementById('thirdPartyUser').value = '';
             } else{
-                $("#thirdPartyUserArea").fadeIn();
+                $("#thirdPartyUserArea").fadeIn("slow");
             }
         });
     }).change();
