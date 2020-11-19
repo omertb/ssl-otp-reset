@@ -327,7 +327,14 @@ def unlock():
                     flash("SMS Code Sending Failed, try again later!")
 
             else:
-                flash("Username or Phone Number is Incorrect! Try Again!", "danger")
+                if 'erp_phone_number' in session and session['erp_phone_number']:
+                    message = "Enter your registered phone number {}{}{}".format(session['erp_phone_number'][0:2],
+                                                                                 len(session['erp_phone_number'][2:-2])*"*",
+                                                                                 session['erp_phone_number'][-2:])
+                    session.pop('erp_phone_number', None)
+                else:
+                    message = "Username is incorrect!"
+                flash(message, "warning")
     # else:
     #     session.pop('_flashes', None)
 
@@ -420,7 +427,14 @@ def reset():
                 else:
                     flash("SMS Code Sending Failed, try again later!", "danger")
             else:
-                flash("Username or Phone Number is Incorrect! Try Again!", "danger")
+                if 'erp_phone_number' in session and session['erp_phone_number']:
+                    message = "Enter your registered phone number {}{}{}".format(session['erp_phone_number'][0:2],
+                                                                                 len(session['erp_phone_number'][2:-2])*"*",
+                                                                                 session['erp_phone_number'][-2:])
+                    session.pop('erp_phone_number', None)
+                else:
+                    message = "Username is incorrect!"
+                flash(message, "warning")
 
     return render_template('reset_form.html', form=form)
 
