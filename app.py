@@ -252,6 +252,7 @@ def unlock():
             username = request.form['input_username']
             username = username.split('@')[0]
             username = username.split("\\")[-1]
+            username = username.lower()
             phone_number = request.form['input_phone_number']
 
             try:
@@ -291,6 +292,7 @@ def unlock():
                     third_party_user = request.form['third_party_user']
                     third_party_user = third_party_user.split('@')[0]
                     third_party_user = third_party_user.split("\\")[-1]
+                    third_party_user = third_party_user.lower()
                     try:
                         third_party_user_ldap_dn = get_ldap_user(third_party_user)
                         username_ldap_dn = get_ldap_user(username)
@@ -353,6 +355,7 @@ def reset():
             username = request.form['input_username']
             username = username.split('@')[0]
             username = username.split("\\")[-1]
+            username = username.lower()
             phone_number = request.form['input_phone_number']
 
             try:
@@ -392,6 +395,7 @@ def reset():
                     third_party_user = request.form['third_party_user']
                     third_party_user = third_party_user.split('@')[0]
                     third_party_user = third_party_user.split("\\")[-1]
+                    third_party_user = third_party_user.lower()
                     try:
                         third_party_user_ldap_dn = get_ldap_user(third_party_user)
                         username_ldap_dn = get_ldap_user(username)
