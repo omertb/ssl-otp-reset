@@ -411,8 +411,9 @@ def reset():
                         return render_template('reset_form.html', form=form)
 
                     # only these groups can unlock only 3rd party users
-                    if ("OU=BT MAGAZA DESTEK MUDURLUGU" in username_ldap_dn \
-                            or "OU=BT MERKEZ DESTEK-DEPO-LISANS MUDURLUGU" in username_ldap_dn)\
+                    if ("OU=BT MAGAZA DESTEK MUDURLUGU" in username_ldap_dn
+                            or "OU=BT MERKEZ DESTEK-DEPO-LISANS MUDURLUGU" in username_ldap_dn
+                            or "OU=BT DEPOLAR DESTEK" in username_ldap_dn) \
                             and "OU=THIRD PARTY" in third_party_user_ldap_dn:
                         session['username'] = third_party_user
                         log_msg = "User: {} - Reset attempt on user {}".format(username, third_party_user)
