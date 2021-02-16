@@ -52,13 +52,13 @@ SMS_USER_PASS = ""  # decision made in get_phone_number function
 requests.packages.urllib3.disable_warnings()
 
 sms_error_dict = {
-    '1': "invalid credential",
-    '2': "account in debit",
-    '3': "invalid action element",
-    '5': "xml error",
-    '6': "invalid originator element",
-    '7': "message id not found",
-    '9': "invalid date",
+    '01': "invalid credential",
+    '02': "account in debit",
+    '03': "invalid action element",
+    '05': "xml error",
+    '06': "invalid originator element",
+    '07': "message id not found",
+    '09': "invalid date",
     '10': "sms not sent"
 }
 
